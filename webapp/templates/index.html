@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="search-box">
+    <form action="/search" method="get">
+      <div class="row">
+        <label for="app">App</label>
+        <input type="text" id="app" name="app" value="{{ app or '' }}" placeholder="e.g. order-service" />
+      </div>
+      <div class="row">
+        <label for="host">Host</label>
+        <input type="text" id="host" name="host" value="{{ host or '' }}" placeholder="e.g. host-1" />
+      </div>
+      <div class="row">
+        <label for="env">Env</label>
+        <select id="env" name="env">
+          <option value="">Any</option>
+          {% for e in ['dev','staging','prod'] %}
+            <option value="{{ e }}" {% if env==e %}selected{% endif %}>{{ e|upper }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="row">
+        <label for="level">Level</label>
+        <select id="level" name="level">
+          <option value="">Any</option>
+          {% for lv in ['DEBUG','INFO','WARN','ERROR','FATAL'] %}
+            <option value="{{ lv }}" {% if level==lv %}selected{% endif %}>{{ lv }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="row">
+        <label for="start">Start</label>
+        <input type="datetime-local" id="start" name="start" value="{{ start or '' }}" />
+      </div>
+      <div class="row">
+        <label for="end">End</label>
+        <input type="datetime-local" id="end" name="end" value="{{ end or '' }}" />
+      </div>
+      <div class="actions">
+        <button type="submit">Search</button>
+        <a class="secondary" href="/">Reset</a>
+      </div>
+    </form>
+    {% if error %}
+      <div class="notice">{{ error }}</div>
+    {% endif %}
+  </section>
+
+  {% if results %}
+  <section class="results">
+    <h2>Results ({{ results|length }} / {{ total }})</h2>
+    <ul>
+      {% for r in results %}
+        <li class="card">
+          <div class="meta">
+            <span class="ts">{{ r.timestamp }}</span>
+            <span class="lvl lvl-{{ r.level|lower }}">{{ r.level }}</span>
+            {% if r.meta and r.meta.app %}
+              <span class="app">{{ r.meta.app }}</span>
+            {% endif %}
+            {% if r.uri %}
+              <span class="uri">{{ r.uri }}</span>
+            {% endif %}
+          </div>
+          <div class="message">
+            {{ r.message }}
+          </div>
+          <div class="details">
+            <span>logger {{ r.logger }}</span>
+            <span>thread {{ r.thread }}</span>
+            {% if r.stack %}
+              <pre class="stack">{{ r.stack }}</pre>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+    <nav class="pagination">
+      <div class="page-info">Page {{ page }} of {{ total_pages if total_pages>0 else 1 }} • Total {{ total }}</div>
+      {% if has_prev %}
+        <a class="secondary" href="/search?app={{ app }}&host={{ host }}&env={{ env }}&level={{ level }}&start={{ start }}&end={{ end }}&page={{ prev_page }}">Prev</a>
+      {% else %}
+        <span class="secondary disabled">Prev</span>
+      {% endif %}
+      {% if has_next %}
+        <a class="secondary" href="/search?app={{ app }}&host={{ host }}&env={{ env }}&level={{ level }}&start={{ start }}&end={{ end }}&page={{ next_page }}">Next</a>
+      {% else %}
+        <span class="secondary disabled">Next</span>
+      {% endif %}
+    </nav>
+  </section>
+  {% endif %}
+{% endblock %}
